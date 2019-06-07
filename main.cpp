@@ -100,8 +100,7 @@ private:
 		p->right = n->left;
 		n->left = p;
 		n->prev = p->prev;
-//		if (p->right != leaf)
-			p->right->prev = p;
+		p->right->prev = p;
 		if (p->prev == leaf)
 			root = n;
 		else if (p == p->prev->left)
@@ -115,8 +114,7 @@ private:
 		p->left = n->right;
 		n->right = p;
 		n->prev = p->prev;
-//		if (p->left != leaf)
-			p->left->prev = p;
+		p->left->prev = p;
 		if (p->prev == leaf)
 			root = n;
 		else if (p == p->prev->left)
@@ -203,16 +201,15 @@ private:
 	void erase_fix(pnode p) {
 		while (p != root and p->color == black) {
 			if (p == p->prev->left) {
-				auto s = p->prev->right; // брат
+				auto s = p->prev->right;
 				if (s->color == red) {
 					p->prev->color = red;
-					s->color = red;
+					s->color = black;
 					lrot(p->prev);
 					s = p->prev->right;
 				}
 				if (s->left->color == black and
 						s->right->color == black) {
-					p->color = red;
 					s->color = red;
 					p = p->prev;
 				} else {
@@ -229,16 +226,15 @@ private:
 					p = root;
 				}
 			} else {
-				auto s = p->prev->left; // брат
+				auto s = p->prev->left;
 				if (s->color == red) {
 					p->prev->color = red;
-					s->color = red;
+					s->color = black;
 					rrot(p->prev);
 					s = p->prev->left;
 				}
 				if (s->left->color == black and
 						s->right->color == black) {
-					p->color = red;
 					s->color = red;
 					p = p->prev;
 				} else {
