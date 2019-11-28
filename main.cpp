@@ -3,15 +3,16 @@
 #define printd(expr) std::cout << #expr " = " << (expr) << endl
 #define null nullptr
 
+// красно черные свойства
 // 1) каждая вершина красная или черная
 // 2) корень черный
 // 3) каждый лист черный
 // 4) если вершина красная то обо ее ребенка черные
-// 5) все пути идущие от корня до листьев содержат одинаковое
-//    количество черных вершин
+// 5) все пути идущие от вершины до листьев которые являются потомками данной вершины
+//    содержат одинаковое количество черных вершин [черная высота вершины]
 
 // bh(x) - черная высота вершины x
-// bh(x) = k
+// пусть bh(x) = k
 // bh(leaf) = 0 - черная высота листа
 // 2^0-1 = 1-1 = 0
 // bh(x.left) >= k-1
@@ -25,12 +26,18 @@
 // в два раза то есть
 // 2log(n+1) >= h
 
+//  n - вершина которую вставили
+//  p - родитель n
+//  возможны следующие нарушния
+//  1) p == leaf && n.color == red (свойство 2)
+//  2) p.color == red && n.color == red (свойство 4)
+
 //  p - вершина которую надо удалить
 //  n - вершина которой будет заменена p
 //  возможны следующие нарушения
-//  1) p == root and n.color == red (свойство 2)
-//  2) p.prev.color == red and n.color == red (свойство 4)
-//  3) p.color == black and n.color == black (свойство 5)
+//  1) p == root && n.color == red (свойство 2)
+//  2) p.prev.color == red && n.color == red (свойство 4)
+//  3) p.color == black && n.color == black (свойство 5)
 
 class red_black_tree {
   enum colors{none, red, black};
@@ -46,32 +53,23 @@ class red_black_tree {
   pnode root{leaf};
 public:
   void insert(int key) {
-    if (root == leaf)
-      root = new node{leaf, leaf, leaf, black, key};
-    else {
-      auto p = root;
-      auto prev = root;
-      while (p != leaf and p->key != key) {
-        prev = p;
-        if (p->key > key)
-          p = p->left;
-        else
-          p = p->right;
-      }
-      if (p == leaf) {
-        auto n = new node{leaf, leaf, prev, red, key};
-        if (prev->key > key)
-          prev->left = n;
-        else
-          prev->right = n;
-        insert_fix(n);
-      }
+    auto p = &root;
+    auto prev = leaf;
+    while (*p != leaf && (*p)->key != key) {
+      prev = *p;
+      if ((*p)->key > key)
+        p = &(*p)->left;
+      else
+        p = &(*p)->right;
     }
-    // Линус не злись
+    if (*p == leaf) {
+      *p = new node{leaf, leaf, prev, red, key};
+      insert_fix(*p);
+    }
   }
   void erase(int key) {
     auto p = root;
-    while (p != leaf and p->key != key) {
+    while (p != leaf && p->key != key) {
       if (p->key > key)
         p = p->left;
       else
@@ -184,7 +182,7 @@ private:
     delete p;
   }
   void erase_fix(pnode p) {
-    while (p != root and p->color == black) {
+    while (p != root && p->color == black) {
       if (p == p->prev->left) {
         auto s = p->prev->right;
         if (s->color == red) {
@@ -193,7 +191,7 @@ private:
           lrot(p->prev);
           s = p->prev->right;
         }
-        if (s->left->color == black and
+        if (s->left->color == black &&
             s->right->color == black) {
           s->color = red;
           p = p->prev;
@@ -218,7 +216,7 @@ private:
           rrot(p->prev);
           s = p->prev->left;
         }
-        if (s->left->color == black and
+        if (s->left->color == black &&
             s->right->color == black) {
           s->color = red;
           p = p->prev;
@@ -239,6 +237,20 @@ private:
     }
     p->color = black;
   }
+  void print(pnode p, int n) {
+    if (p != leaf) {
+      print(p->right, n + 1);
+      for (int i = 0; i < n; i++)
+        std::cout << "    ";
+      if (p->color == red)
+        std::cout << "\033[1;31m";
+      else
+        std::cout << "\033[1;30m";
+      std::cout << p->key << std::endl;
+      std::cout << "\033[0m";
+      print(p->left, n + 1);
+    }
+  }
 };
 
 using namespace std;
@@ -246,16 +258,10 @@ using namespace std;
 int main() {
   red_black_tree t;
 
-  t.insert(1);
-  t.insert(2);
-  t.insert(3);
-  t.insert(4);
-  t.insert(5);
-  t.insert(6);
-  t.insert(7);
-  t.insert(8);
-  t.insert(9);
-  t.insert(10);
+  for (int i = 0; i < 50; i++)
+    t.insert(i);
+
+  t.print();
 
   return 0;
 }
